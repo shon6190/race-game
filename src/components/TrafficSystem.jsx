@@ -3,13 +3,13 @@ import { MathUtils } from 'three';
 import { useFrame } from '@react-three/fiber';
 import { CuboidCollider, RigidBody } from '@react-three/rapier';
 import { useGameStore } from '../store/gameStore';
-import { LANES } from '../systems/highwayConfig';
+import { BASE_SPEEDS, LANES } from '../systems/highwayConfig';
 import { audioSystem } from '../systems/soundSystem';
 
 const MAX_TRAFFIC = 20;
 const BASE_TRAFFIC = 8;
-const SPAWN_AHEAD_MIN = 180;
-const SPAWN_AHEAD_MAX = 520;
+const SPAWN_AHEAD_MIN = 240;
+const SPAWN_AHEAD_MAX = 640;
 const RECYCLE_BEHIND_DISTANCE = 120;
 const REAR_HIT_GUARD_DISTANCE = 1;
 
@@ -33,8 +33,10 @@ function spawnVehicle(playerZ, checkpointIndex, seed) {
   const laneIndex = randomLane();
   const type = seed.type ?? randomType();
   const y = type === 'truck' ? 0.78 : 0.6;
-  const minSpeed = 10 + checkpointIndex * 0.8;
-  const maxSpeed = 20 + checkpointIndex * 1.2;
+  const checkpointSlot = Math.max(0, Math.min(checkpointIndex, BASE_SPEEDS.length - 1));
+  const playerCruise = BASE_SPEEDS[checkpointSlot] * 0.32;
+  const minSpeed = Math.max(6, playerCruise - 8);
+  const maxSpeed = Math.max(minSpeed + 1.2, playerCruise - 3);
   return {
     id: seed.id,
     type,
@@ -120,7 +122,9 @@ export function TrafficSystem({ debug = false }) {
 
       if (running) {
         vehicle.z -= vehicle.speed * dt;
-        if (vehicle.z > playerZ + REAR_HIT_GUARD_DISTANCE || vehicle.z > playerZ + RECYCLE_BEHIND_DISTANCE) {
+        const behindPlayer = vehicle.z > playerZ + REAR_HIT_GUARD_DISTANCE;
+        const driftedTooFar = vehicle.z < playerZ - (SPAWN_AHEAD_MAX + RECYCLE_BEHIND_DISTANCE);
+        if (behindPlayer || driftedTooFar) {
           const respawned = spawnVehicle(playerZ, state.currentCheckpoint, vehicle);
           vehicle.laneIndex = respawned.laneIndex;
           vehicle.x = respawned.x;

@@ -17,7 +17,7 @@ export const HIGHWAY_CONFIG = Object.freeze({
   worldLength: 10000,
   worldCenterZ: -5000,
   checkpointSpacing: 420,
-  boardLeadDistance: 90,
+  boardLeadDistance: 130,
   startY: 1.05,
   gateWidth: 3.2,
 });

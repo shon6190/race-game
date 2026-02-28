@@ -1,13 +1,38 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const USERS_STORAGE_KEY = 'traffic_rush_users';
+const LAST_USER_STORAGE_KEY = 'traffic_rush_last_user';
+
+function readStoredUsers() {
+  try {
+    const raw = window.localStorage.getItem(USERS_STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed.filter((name) => typeof name === 'string' && name.trim().length > 0);
+  } catch (error) {
+    console.error('Failed to read stored users:', error);
+    return [];
+  }
+}
+
+function writeStoredUsers(users) {
+  try {
+    window.localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  } catch (error) {
+    console.error('Failed to save users:', error);
+  }
+}
 
 export function LandingPage({ onStart }) {
   const [error, setError] = useState('');
   const [showSplash, setShowSplash] = useState(true);
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState(() => window.localStorage.getItem(LAST_USER_STORAGE_KEY) || '');
   const [autocompleteList, setAutocompleteList] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  const apiBaseUrl = useMemo(() => '/api/users', []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -16,7 +41,7 @@ export function LandingPage({ onStart }) {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleInputChange = async (event) => {
+  const handleInputChange = (event) => {
     const value = event.target.value;
     setInputValue(value);
     setError('');
@@ -26,32 +51,10 @@ export function LandingPage({ onStart }) {
       return;
     }
 
-    setIsSearching(true);
-    try {
-      const response = await fetch(
-        `${apiBaseUrl}/search?username=${encodeURIComponent(value)}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (!response.ok) {
-        setAutocompleteList([]);
-        return;
-      }
-
-      const data = await response.json();
-      const users = Array.isArray(data) ? data : data.users || [];
-      setAutocompleteList(users);
-    } catch (fetchError) {
-      console.error('Autocomplete error:', fetchError);
-      setAutocompleteList([]);
-    } finally {
-      setIsSearching(false);
-    }
+    const query = value.trim().toLowerCase();
+    const users = readStoredUsers();
+    const matches = users.filter((name) => name.toLowerCase().includes(query)).slice(0, 8);
+    setAutocompleteList(matches);
   };
 
   const handleAutocompleteSelect = (name) => {
@@ -59,7 +62,7 @@ export function LandingPage({ onStart }) {
     setAutocompleteList([]);
   };
 
-  const handleLogin = async (event) => {
+  const handleLogin = (event) => {
     event.preventDefault();
     const riderName = inputValue.trim();
     if (!riderName) {
@@ -67,32 +70,23 @@ export function LandingPage({ onStart }) {
       return;
     }
 
-    try {
-      const response = await fetch(apiBaseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username: riderName }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to register rider with the backend');
-      }
-    } catch (loginError) {
-      console.error(loginError);
-      setError('Error connecting to the game server. Please try again.');
-      return;
-    }
+    const existingUsers = readStoredUsers();
+    const nextUsers = [
+      riderName,
+      ...existingUsers.filter((name) => name.toLowerCase() !== riderName.toLowerCase()),
+    ].slice(0, 100);
+    writeStoredUsers(nextUsers);
+    window.localStorage.setItem(LAST_USER_STORAGE_KEY, riderName);
 
     setError('');
+    setAutocompleteList([]);
     onStart(riderName);
   };
 
   if (showSplash) {
     return (
       <div className="splash-screen">
-        <img src="/splash.jpg" alt="Traffic Rush Splash" className="splash-image" />
+        <img src="\cover_image.png" alt="Traffic Rush Splash" className="splash-image" />
       </div>
     );
   }
@@ -100,7 +94,7 @@ export function LandingPage({ onStart }) {
   return (
     <>
       <video className="bg" autoPlay loop muted playsInline>
-        <source src="/Bike_Race_Game_Login_Background_GIF.mp4" type="video/mp4" />
+        <source src="/video.mp4" type="video/mp4" />
       </video>
 
       <div className="overlay-dark" />
@@ -126,8 +120,7 @@ export function LandingPage({ onStart }) {
 
               {autocompleteList.length > 0 ? (
                 <ul className="autocomplete-dropdown">
-                  {autocompleteList.map((item, index) => {
-                    const name = item.username || item;
+                  {autocompleteList.map((name, index) => {
                     return (
                       <li
                         key={`${name}-${index}`}
@@ -146,7 +139,6 @@ export function LandingPage({ onStart }) {
               ) : null}
             </div>
 
-            {isSearching ? <p className="search-hint">Searching riders...</p> : null}
             {error ? <p id="error" className="error-text">{error}</p> : null}
             <button type="submit" className="login-btn">Start Ride</button>
           </form>

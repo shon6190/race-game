@@ -89,24 +89,24 @@ function OverheadBoard({ checkpoint }) {
   const headline = checkpoint.prompt;
 
   return (
-    <group position={[0, 0, boardZ]} scale={[1.3, 1.3, 1.3]}>
-      <mesh castShadow position={[8.6, 4.2, 0]}>
-        <boxGeometry args={[0.5, 8.4, 0.5]} />
+    <group position={[0, 0, boardZ]} scale={[1.4, 1.4, 1.4]}>
+      <mesh castShadow position={[10.8, 5.2, 0]}>
+        <boxGeometry args={[0.56, 10.4, 0.56]} />
         <meshStandardMaterial color="#94a3b8" metalness={0.65} roughness={0.3} />
       </mesh>
-      <mesh castShadow position={[3.7, 7.6, 0]}>
-        <boxGeometry args={[10.2, 0.4, 0.45]} />
+      <mesh castShadow position={[2.7, 9.4, 0]}>
+        <boxGeometry args={[16.6, 0.44, 0.5]} />
         <meshStandardMaterial color="#64748b" metalness={0.55} roughness={0.32} />
       </mesh>
-      <mesh castShadow position={[-1.6, 6.9, 0]}>
-        <boxGeometry args={[10.4, 3.2, 0.35]} />
+      <mesh castShadow position={[-1.6, 7.1, 0]}>
+        <boxGeometry args={[14.4, 3.6, 0.38]} />
         <meshStandardMaterial color="#0f766e" metalness={0.45} roughness={0.25} />
       </mesh>
       <Text
-        position={[-1.6, 7.18, 0.22]}
+        position={[-1.6, 7.6, 0.24]}
         color="#f8fafc"
-        fontSize={0.74}
-        maxWidth={9.4}
+        fontSize={0.9}
+        maxWidth={13.2}
         outlineWidth={0.02}
         outlineColor="#022c22"
         anchorX="center"
@@ -115,10 +115,10 @@ function OverheadBoard({ checkpoint }) {
         {headline}
       </Text>
       <Text
-        position={[-1.6, 6.18, 0.22]}
+        position={[-1.6, 6.35, 0.24]}
         color="#bae6fd"
-        fontSize={0.56}
-        maxWidth={9.2}
+        fontSize={0.68}
+        maxWidth={12.6}
         outlineWidth={0.018}
         outlineColor="#0c4a6e"
         anchorX="center"
